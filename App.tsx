@@ -300,6 +300,83 @@ const App: React.FC = () => {
             )}
         </div>
     );
+    const handleExitInterview = async () => {
+        if (!interviewId) return;
+        
+        if (!window.confirm("Вы уверены, что хотите завершить интервью досрочно?")) {
+            return;
+        }
+
+        setIsLoading(true);
+        setStatusText('⏳ Завершение интервью...');
+
+        try {
+            // Assuming you have an exitInterview function in your api.ts
+            // If not, you'll need to add it similar to startInterview/sendAnswer
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/interviews/${interviewId}/exit`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            setMessages(prev => [...prev, { 
+                id: Date.now().toString(), 
+                text: '🛑 Интервью было завершено пользователем.', 
+                type: 'assistant' 
+            }]);
+            
+            setIsInterviewActive(false);
+            setStatusText('✅ Интервью завершено.');
+            
+            // Optionally generate feedback for partial interview if desired
+            // Or just reset
+            resetInterview(); 
+
+        } catch (err: any) {
+            setMessages(prev => [...prev, { 
+                id: Date.now().toString(), 
+                text: `❌ Ошибка при завершении: ${err.message}`, 
+                type: 'assistant' 
+            }]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // ... existing functions ...
+
+    return (
+        <div className="container">
+            {/* ... header ... */}
+
+            {!showHistory && (
+                <>
+                    <div className="controls">
+                        {/* ... existing selects ... */}
+                        
+                        {/* Show Exit Button only when interview is active */}
+                        {isInterviewActive && (
+                            <button 
+                                onClick={handleExitInterview} 
+                                disabled={isLoading} 
+                                className="btn-danger" // Make sure to add .btn-danger styles in CSS
+                            >
+                                🛑 Выйти из интервью
+                            </button>
+                        )}
+                    </div>
+
+                    {/* ... chat box ... */}
+                    
+                    {/* ... input area ... */}
+                    
+                    {/* ... feedback section ... */}
+                </>
+            )}
+        </div>
+    );
 };
 
 export default App;
